@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   CardMedia,
-  CardActions,
   Chip,
   Avatar,
   Pagination,
@@ -27,12 +26,14 @@ import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CommentIcon from '@mui/icons-material/Comment';
+
 
 const POSTS_PER_PAGE = 9;
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { posts } = useBlog();
+  const { posts, getComments } = useBlog();
   const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -171,7 +172,9 @@ const Home: React.FC = () => {
               mb: 4,
             }}
           >
-            {paginatedPosts.map((post) => (
+            {paginatedPosts.map((post) => {
+              const comments = post.id ? getComments(post.id) : []
+              return (
                 <Card
                   sx={{
                     height: '100%',
@@ -244,6 +247,12 @@ const Home: React.FC = () => {
                           </Typography>
                         </Box>
                       )}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <CommentIcon fontSize="small" color="action" />
+                        <Typography variant="caption" color="text.secondary">
+                          {comments.length}
+                        </Typography>
+                      </Box>
                     </Box>
                     {post.tags.length > 0 && (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
@@ -260,7 +269,8 @@ const Home: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
-            ))}
+            )
+            })}
           </Box>
 
           {totalPages > 1 && (
