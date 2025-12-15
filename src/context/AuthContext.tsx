@@ -39,6 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 
     if (foundUser) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(userWithoutPassword));
@@ -65,6 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     users.push(newUser);
     localStorage.setItem('bloganity_users', JSON.stringify(users));
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _, ...userWithoutPassword } = newUser;
     setUser(userWithoutPassword);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userWithoutPassword));

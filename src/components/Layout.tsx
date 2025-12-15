@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, IconButton, Box, Avatar, Menu, MenuItem, Badge } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, IconButton, Box, Avatar, Menu, MenuItem } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme as useCustomTheme } from '../context/ThemeContext';

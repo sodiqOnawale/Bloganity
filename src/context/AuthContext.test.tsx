@@ -64,7 +64,7 @@ describe('AuthContext', () => {
 
   it('should login an existing user', async () => {
     // First register
-    const { rerender } = render(
+    render(
       <AuthProvider>
         <TestComponent />
       </AuthProvider>

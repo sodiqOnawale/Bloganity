@@ -13,14 +13,12 @@ import {
   Tabs,
   Tab,
   Chip,
-  IconButton,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import { useBlog } from '../context/BlogContext';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
-import BookmarkIcon from '@mui/icons-material/Bookmark';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 const Profile: React.FC = () => {
@@ -182,58 +180,58 @@ const Profile: React.FC = () => {
           }}
         >
           {displayPosts.map((post) => (
-              <Card key={post.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                {post.imageUrl && (
-                  <Box
-                    component="img"
-                    src={post.imageUrl}
-                    alt={post.title}
-                    sx={{
-                      width: '100%',
-                      height: 200,
-                      objectFit: 'cover',
-                    }}
-                  />
-                )}
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Chip label={post.category} size="small" color="primary" sx={{ mb: 1 }} />
-                  <Typography variant="h6" component="h2" gutterBottom noWrap>
-                    {post.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} noWrap>
-                    {post.excerpt}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      👁 {post.views}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ❤️ {post.likes}
-                    </Typography>
-                  </Box>
+            <Card key={post.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              {post.imageUrl && (
+                <Box
+                  component="img"
+                  src={post.imageUrl}
+                  alt={post.title}
+                  sx={{
+                    width: '100%',
+                    height: 200,
+                    objectFit: 'cover',
+                  }}
+                />
+              )}
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Chip label={post.category} size="small" color="primary" sx={{ mb: 1 }} />
+                <Typography variant="h6" component="h2" gutterBottom noWrap>
+                  {post.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }} noWrap>
+                  {post.excerpt}
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
                   <Typography variant="caption" color="text.secondary">
-                    {format(new Date(post.createdAt), 'MMM d, yyyy')}
+                      👁 {post.views}
                   </Typography>
-                </CardContent>
-                <CardActions>
+                  <Typography variant="caption" color="text.secondary">
+                      ❤️ {post.likes}
+                  </Typography>
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  {format(new Date(post.createdAt), 'MMM d, yyyy')}
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <Button
+                  size="small"
+                  startIcon={<VisibilityIcon />}
+                  onClick={() => navigate(`/post/${post.id}`)}
+                >
+                    View
+                </Button>
+                {tabValue === 0 && (
                   <Button
                     size="small"
-                    startIcon={<VisibilityIcon />}
-                    onClick={() => navigate(`/post/${post.id}`)}
+                    startIcon={<EditIcon />}
+                    onClick={() => navigate(`/edit-post/${post.id}`)}
                   >
-                    View
-                  </Button>
-                  {tabValue === 0 && (
-                    <Button
-                      size="small"
-                      startIcon={<EditIcon />}
-                      onClick={() => navigate(`/edit-post/${post.id}`)}
-                    >
                       Edit
-                    </Button>
-                  )}
-                </CardActions>
-              </Card>
+                  </Button>
+                )}
+              </CardActions>
+            </Card>
           ))}
         </Box>
       )}
