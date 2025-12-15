@@ -9,7 +9,6 @@ import {
   Avatar,
   IconButton,
   Chip,
-  TextField,
   Button,
   Divider,
   Paper,
@@ -121,8 +120,8 @@ const PostDetail: React.FC = () => {
           text: post.excerpt,
           url,
         });
-      } catch (err) {
-        // User cancelled or error occurred
+      } catch {
+        setSnackbar({ open: true, message: 'Error sharing post' });
       }
     } else {
       navigator.clipboard.writeText(url);

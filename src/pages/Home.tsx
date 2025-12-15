@@ -176,6 +176,7 @@ const Home: React.FC = () => {
               const comments = post.id ? getComments(post.id) : []
               return (
                 <Card
+                  key={post.id}
                   sx={{
                     height: '100%',
                     display: 'flex',
@@ -269,7 +270,7 @@ const Home: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
-            )
+              )
             })}
           </Box>
 

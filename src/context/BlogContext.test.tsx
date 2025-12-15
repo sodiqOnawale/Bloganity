@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BlogProvider, useBlog } from './BlogContext';
-import { useAuth } from './AuthContext';
 import { act } from 'react-dom/test-utils';
 import { User } from '../types';
 
