@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -20,14 +20,22 @@ import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import IconButton from '@mui/material/IconButton';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const { allPosts, getBookmarkedPosts } = useBlog();
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [editing, setEditing] = useState(false);
   const [bio, setBio] = useState(user?.bio || '');
+  const [editingAvatar, setEditingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadMethod, setUploadMethod] = useState<'upload' | 'url'>('upload');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
@@ -35,9 +43,52 @@ const Profile: React.FC = () => {
   const bookmarkedPosts = getBookmarkedPosts(user.id);
 
   const handleSaveBio = () => {
-    // In a real app, this would update the user profile
     setEditing(false);
+    updateProfile({ bio });
   };
+  
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setAvatarUrl(base64String);
+      setAvatarPreview(base64String);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveAvatar = () => {
+    const avatarToSave = avatarPreview || avatarUrl;
+    if (avatarToSave) {
+      updateProfile({ avatar: avatarToSave });
+      setEditingAvatar(false);
+      setAvatarPreview(null);
+      setAvatarUrl('');
+    }
+  };
+
+  const handleCancelAvatar = () => {
+    setEditingAvatar(false);
+    setAvatarUrl(user?.avatar || '');
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
 
   const displayPosts = tabValue === 0 ? userPosts : bookmarkedPosts;
 
@@ -45,16 +96,120 @@ const Profile: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper sx={{ p: 4, mb: 4 }}>
         <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-          <Avatar
-            sx={{
-              width: 120,
-              height: 120,
-              bgcolor: 'primary.main',
-              fontSize: '3rem',
-            }}
-          >
-            {user.username[0].toUpperCase()}
-          </Avatar>
+          <Box sx={{ position: 'relative' }}>
+            <Avatar
+              src={user.avatar}
+              sx={{
+                width: 120,
+                height: 120,
+                bgcolor: 'primary.main',
+                fontSize: '3rem',
+              }}
+            >
+              {!user.avatar && user.username[0].toUpperCase()}
+            </Avatar>
+            {editingAvatar ? (
+              <Box sx={{ mt: 2, minWidth: 300 }}>
+                <Box sx={{ mb: 2 }}>
+                  <Button
+                    variant={uploadMethod === 'upload' ? 'contained' : 'outlined'}
+                    onClick={() => setUploadMethod('upload')}
+                    startIcon={<UploadFileIcon />}
+                    sx={{ mr: 1 }}
+                    size="small"
+                  >
+                    Upload
+                  </Button>
+                  <Button
+                    variant={uploadMethod === 'url' ? 'contained' : 'outlined'}
+                    onClick={() => setUploadMethod('url')}
+                    size="small"
+                  >
+                    From URL
+                  </Button>
+                </Box>
+
+                {uploadMethod === 'upload' ? (
+                  <Box>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => fileInputRef.current?.click()}
+                      startIcon={<UploadFileIcon />}
+                      sx={{ mb: 2 }}
+                    >
+                      Choose Image
+                    </Button>
+                    {avatarPreview && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="caption" display="block" sx={{ mb: 1 }}>
+                          Preview:
+                        </Typography>
+                        <Avatar
+                          src={avatarPreview}
+                          sx={{
+                            width: 100,
+                            height: 100,
+                            bgcolor: 'primary.main',
+                            fontSize: '2.5rem',
+                          }}
+                        >
+                          {user.username[0].toUpperCase()}
+                        </Avatar>
+                      </Box>
+                    )}
+                  </Box>
+                ) : (
+                  <TextField
+                    fullWidth
+                    label="Profile Picture URL"
+                    value={avatarUrl}
+                    onChange={(e) => {
+                      setAvatarUrl(e.target.value);
+                      setAvatarPreview(e.target.value);
+                    }}
+                    placeholder="https://example.com/avatar.jpg"
+                    sx={{ mb: 2 }}
+                  />
+                )}
+
+                {(avatarPreview || avatarUrl) && (
+                  <Box>
+                    <Button variant="contained" onClick={handleSaveAvatar} sx={{ mr: 1 }}>
+                      Save
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={handleCancelAvatar}>
+                      Cancel
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            ) : (
+              <IconButton
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {bgcolor: 'primary.dark'}
+                }}
+                onClick={() => setEditingAvatar(true)}
+                size='small'
+              >
+                <CameraAltIcon />
+              </IconButton>
+            )}
+          </Box>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
               {user.username}
