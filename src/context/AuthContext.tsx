@@ -78,6 +78,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  const updateProfile = (updates: Partial<User>) => {
+    if (!user) return; 
+
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser))
+
+    const users = JSON.parse(localStorage.getItem('bloganity_users') || '[]');
+    const userIndex = users.findIndex((u: User & { password: string }) => u.id === user.id);
+    if (userIndex !== -1) {
+      users[userIndex] = {...users[userIndex], ...updates};
+      localStorage.setItem('bloganity_users', JSON.stringify(users))
+    }
+  }
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -85,6 +100,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       register,
       logout,
       isAuthenticated: !!user,
+      updateProfile
     }}>
       {children}
     </AuthContext.Provider>

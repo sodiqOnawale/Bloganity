@@ -40,6 +40,7 @@ export interface AuthContextType {
   register: (username: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
+  updateProfile: (updates: Partial<User>) => void;
 }
 
 export interface Bookmark {
