@@ -1,9 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import { AuthProvider } from './context/AuthContext';
 import { BlogProvider } from './context/BlogContext';
-import { ThemeProvider as CustomThemeProvider, useTheme as useCustomTheme } from './context/ThemeContext';
+import { ThemeProvider as CustomThemeProvider } from './context/ThemeContext';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -13,59 +12,7 @@ import EditPost from './pages/EditPost';
 import Profile from './pages/Profile';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-
-const MaterialThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { theme } = useCustomTheme();
-  
-  const muiTheme = createTheme({
-    palette: {
-      mode: theme,
-      primary: {
-        main: '#1976d2',
-      },
-      secondary: {
-        main: '#dc004e',
-      },
-    },
-    typography: {
-      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-      h1: {
-        fontWeight: 600,
-      },
-      h2: {
-        fontWeight: 600,
-      },
-      h3: {
-        fontWeight: 600,
-      },
-    },
-    components: {
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            textTransform: 'none',
-            borderRadius: 8,
-          },
-        },
-      },
-      MuiCard: {
-        styleOverrides: {
-          root: {
-            borderRadius: 12,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          },
-        },
-      },
-    },
-  });
-
-  return (
-    <ThemeProvider theme={muiTheme}>
-      <CssBaseline />
-      {children}
-    </ThemeProvider>
-  );
-};
+import { MaterialThemeProvider} from './theme/theme';
 
 const BlogAppRoutes: React.FC = () => {
   return (
