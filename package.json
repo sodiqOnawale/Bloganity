@@ -2,7 +2,7 @@
   "name": "bloganity",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://www.bloganity.com",
+  "homepage": "https://sodiqonawale.github.io/Bloganity",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -35,9 +35,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix"
   },
   "browserslist": {
     "production": [
