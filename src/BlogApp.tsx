@@ -65,7 +65,7 @@ const BlogApp: React.FC = () => {
       <AuthProvider>
         <BlogProvider>
           <MaterialThemeProvider>
-            <Router basename={process.env.PUBLIC_URL}>
+            <Router>
               <BlogAppRoutes />
             </Router>
           </MaterialThemeProvider>
