@@ -1,12 +1,28 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType } from '../types';
+import { User, AuthContextType, RegisterParams } from '../types';
+import { isValidPhone, normalizePhone, phonesMatch } from '../utils/phone';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'bloganity_auth';
 
+type StoredUser = User & { password: string };
+
+const findUserByIdentifier = (users: StoredUser[], identifier: string): StoredUser | undefined => {
+  const trimmed = identifier.trim().toLowerCase();
+
+  if (trimmed.includes('@')) {
+    return users.find((u) => u.email?.toLowerCase() === trimmed);
+  }
+
+  if (isValidPhone(identifier)) {
+    return users.find((u) => u.phone && phonesMatch(u.phone, identifier));
+  }
+
+  return undefined;
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Initialize user state from localStorage synchronously to prevent logout on refresh
   const [user, setUser] = useState<User | null>(() => {
     try {
       const storedUser = localStorage.getItem(STORAGE_KEY);
@@ -19,7 +35,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return null;
   });
 
-  // Keep this useEffect as a backup to handle any edge cases
   useEffect(() => {
     const storedUser = localStorage.getItem(STORAGE_KEY);
     if (storedUser && !user) {
@@ -31,14 +46,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [user]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would be an API call
-    const users = JSON.parse(localStorage.getItem('bloganity_users') || '[]');
-    const foundUser = users.find((u: User & { password: string }) => 
-      u.email === email && u.password === password
-    );
+  const login = async (identifier: string, password: string): Promise<boolean> => {
+    const users: StoredUser[] = JSON.parse(localStorage.getItem('bloganity_users') || '[]');
+    const foundUser = findUserByIdentifier(users, identifier);
 
-    if (foundUser) {
+    if (foundUser && foundUser.password === password) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
@@ -48,19 +60,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return false;
   };
 
-  const register = async (username: string, email: string, password: string): Promise<boolean> => {
-    const users = JSON.parse(localStorage.getItem('bloganity_users') || '[]');
-    
-    if (users.some((u: User & { password: string }) => u.email === email || u.username === username)) {
-      return false; // User already exists
+  const register = async ({ username, password, email, phone }: RegisterParams): Promise<boolean> => {
+    const users: StoredUser[] = JSON.parse(localStorage.getItem('bloganity_users') || '[]');
+    const trimmedUsername = username.trim();
+    const trimmedEmail = email?.trim().toLowerCase();
+    const normalizedPhone = phone ? normalizePhone(phone) : undefined;
+
+    if (!trimmedUsername) {
+      return false;
     }
 
-    const newUser: User & { password: string } = {
+    if (!trimmedEmail && !normalizedPhone) {
+      return false;
+    }
+
+    if (trimmedEmail && users.some((u) => u.email?.toLowerCase() === trimmedEmail)) {
+      return false;
+    }
+
+    if (normalizedPhone && users.some((u) => u.phone && phonesMatch(u.phone, normalizedPhone))) {
+      return false;
+    }
+
+    if (users.some((u) => u.username.toLowerCase() === trimmedUsername.toLowerCase())) {
+      return false;
+    }
+
+    const newUser: StoredUser = {
       id: Date.now().toString(),
-      username,
-      email,
+      username: trimmedUsername,
       password,
       createdAt: new Date().toISOString(),
+      ...(trimmedEmail ? { email: trimmedEmail } : {}),
+      ...(normalizedPhone ? { phone: normalizedPhone } : {}),
     };
 
     users.push(newUser);
@@ -79,19 +111,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const updateProfile = (updates: Partial<User>) => {
-    if (!user) return; 
+    if (!user) return;
 
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
 
-    const users = JSON.parse(localStorage.getItem('bloganity_users') || '[]');
-    const userIndex = users.findIndex((u: User & { password: string }) => u.id === user.id);
+    const users: StoredUser[] = JSON.parse(localStorage.getItem('bloganity_users') || '[]');
+    const userIndex = users.findIndex((u) => u.id === user.id);
     if (userIndex !== -1) {
-      users[userIndex] = {...users[userIndex], ...updates};
-      localStorage.setItem('bloganity_users', JSON.stringify(users))
+      users[userIndex] = { ...users[userIndex], ...updates };
+      localStorage.setItem('bloganity_users', JSON.stringify(users));
     }
-  }
+  };
 
   return (
     <AuthContext.Provider value={{
@@ -100,7 +132,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       register,
       logout,
       isAuthenticated: !!user,
-      updateProfile
+      updateProfile,
     }}>
       {children}
     </AuthContext.Provider>
@@ -114,4 +146,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

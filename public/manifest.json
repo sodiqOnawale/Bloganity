@@ -1,0 +1,25 @@
+{
+  "short_name": "Bloganity",
+  "name": "Bloganity - Modern Blogging Platform",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0D1B2A",
+  "background_color": "#FDFBF7"
+}

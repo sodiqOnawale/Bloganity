@@ -1,10 +1,18 @@
 export interface User {
   id: string;
   username: string;
-  email: string;
+  email?: string;
+  phone?: string;
   avatar?: string;
   bio?: string;
   createdAt: string;
+}
+
+export interface RegisterParams {
+  username: string;
+  password: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface BlogPost {
@@ -36,8 +44,8 @@ export interface Comment {
 
 export interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (username: string, email: string, password: string) => Promise<boolean>;
+  login: (identifier: string, password: string) => Promise<boolean>;
+  register: (params: RegisterParams) => Promise<boolean>;
   logout: () => void;
   isAuthenticated: boolean;
   updateProfile: (updates: Partial<User>) => void;

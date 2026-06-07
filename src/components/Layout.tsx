@@ -104,8 +104,26 @@ const Layout: React.FC = () => {
               <IconButton color="inherit" onClick={toggleTheme} sx={{ mr: 1 }}>
                 {theme === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
               </IconButton>
-              <Button color="inherit" component={Link} to="/login">
+              <Button color="inherit" component={Link} to="/login" sx={{ mr: 1 }}>
                 Sign In
+              </Button>
+              <Button
+                variant="outlined"
+                color="inherit"
+                component={Link}
+                to="/signup"
+                sx={{
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                  transition: 'transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                  '&:hover': {
+                    bgcolor: 'white',
+                    color: 'black',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+                  },
+                }}
+              >
+                Sign Up
               </Button>
             </>
           )}

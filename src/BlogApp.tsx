@@ -20,6 +20,7 @@ const BlogAppRoutes: React.FC = () => {
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
+        <Route path="signup" element={<Login />} />
         <Route path="post/:id" element={<PostDetail />} />
         <Route
           path="dashboard"
