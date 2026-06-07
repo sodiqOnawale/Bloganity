@@ -17,10 +17,30 @@ const TestComponent: React.FC = () => {
         Login
       </button>
       <button
-        onClick={() => register('testuser', 'test@example.com', 'password123')}
+        onClick={() => register({
+          username: 'testuser',
+          email: 'test@example.com',
+          password: 'password123',
+        })}
         data-testid="register-btn"
       >
         Register
+      </button>
+      <button
+        onClick={() => register({
+          username: 'phoneuser',
+          phone: '5551234567',
+          password: 'password123',
+        })}
+        data-testid="register-phone-btn"
+      >
+        Register Phone
+      </button>
+      <button
+        onClick={() => login('5551234567', 'password123')}
+        data-testid="login-phone-btn"
+      >
+        Login Phone
       </button>
       <button onClick={logout} data-testid="logout-btn">
         Logout
@@ -119,6 +139,36 @@ describe('AuthContext', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('authenticated')).toHaveTextContent('false');
+    });
+  });
+
+  it('should register and login with phone number', async () => {
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>
+    );
+
+    await act(async () => {
+      screen.getByTestId('register-phone-btn').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user')).toHaveTextContent('phoneuser');
+      expect(screen.getByTestId('authenticated')).toHaveTextContent('true');
+    });
+
+    await act(async () => {
+      screen.getByTestId('logout-btn').click();
+    });
+
+    await act(async () => {
+      screen.getByTestId('login-phone-btn').click();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('user')).toHaveTextContent('phoneuser');
+      expect(screen.getByTestId('authenticated')).toHaveTextContent('true');
     });
   });
 

@@ -69,8 +69,8 @@ const Home: React.FC = () => {
           textAlign: 'center',
           background: (theme) =>
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              ? 'linear-gradient(135deg,rgb(234, 102, 128) 0%, #764ba2 100%)'
+              : 'linear-gradient(135deg,rgb(192, 234, 102) 0%, #764ba2 100%)',
           color: 'white',
         }}
       >
@@ -84,10 +84,10 @@ const Home: React.FC = () => {
           <Button
             variant="contained"
             size="large"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/signup')}
             sx={{
               bgcolor: 'white',
-              color: 'primary.main',
+              color: 'black',
               '&:hover': { bgcolor: 'grey.100' },
             }}
           >

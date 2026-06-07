@@ -39,8 +39,8 @@ describe('Login', () => {
     );
 
     expect(screen.getAllByText(/Sign In/i).length).toBeGreaterThan(0);
-    expect(screen.getByLabelText(/Email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /email/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
 
   it('should switch to sign up tab', () => {
@@ -54,6 +54,47 @@ describe('Login', () => {
     fireEvent.click(signUpTab);
 
     expect(screen.getByLabelText(/Username/i)).toBeInTheDocument();
+  });
+
+  it('should switch to phone sign up', () => {
+    render(
+      <Wrapper>
+        <Login />
+      </Wrapper>
+    );
+
+    fireEvent.click(screen.getByText(/Sign Up/i));
+    fireEvent.click(screen.getByLabelText(/phone/i));
+
+    expect(screen.getByLabelText(/Phone Number/i)).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /email/i })).not.toBeInTheDocument();
+  });
+
+  it('should register a new user with phone number', async () => {
+    render(
+      <Wrapper>
+        <Login />
+      </Wrapper>
+    );
+
+    fireEvent.click(screen.getByText(/Sign Up/i));
+    fireEvent.click(screen.getByLabelText(/phone/i));
+
+    fireEvent.change(screen.getByLabelText(/Username/i), {
+      target: { value: 'phoneuser' },
+    });
+    fireEvent.change(screen.getByLabelText(/Phone Number/i), {
+      target: { value: '5559876543' },
+    });
+    fireEvent.change(screen.getByLabelText(/Password/i), {
+      target: { value: 'password123' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Sign Up/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    });
   });
 
   it('should register a new user', async () => {
@@ -71,7 +112,7 @@ describe('Login', () => {
     fireEvent.change(screen.getByLabelText(/Username/i), {
       target: { value: 'testuser' },
     });
-    fireEvent.change(screen.getByLabelText(/Email/i), {
+    fireEvent.change(screen.getByRole('textbox', { name: /email/i }), {
       target: { value: 'test@example.com' },
     });
     fireEvent.change(screen.getByLabelText(/Password/i), {

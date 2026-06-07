@@ -15,6 +15,7 @@ import {
   Chip,
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { formatPhoneForDisplay } from '../utils/phone';
 import { useBlog } from '../context/BlogContext';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -214,9 +215,16 @@ const Profile: React.FC = () => {
             <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
               {user.username}
             </Typography>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              {user.email}
-            </Typography>
+            {user.email && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                {user.email}
+              </Typography>
+            )}
+            {user.phone && (
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                {formatPhoneForDisplay(user.phone)}
+              </Typography>
+            )}
             <Typography variant="body2" color="text.secondary" gutterBottom>
               Member since {format(new Date(user.createdAt), 'MMMM yyyy')}
             </Typography>
