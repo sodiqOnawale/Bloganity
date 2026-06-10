@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { useBlog } from '../context/BlogContext';
 import { useAuth } from '../context/AuthContext';
+import { isSeedComment, isSeedPost } from '../utils/seedPosts';
 import { format } from 'date-fns';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
@@ -50,12 +51,13 @@ const PostDetail: React.FC = () => {
 
   const post = id ? getPost(id) : undefined;
   const comments = id ? getComments(id) : [];
-  const isLiked = post && user ? post.likedBy?.includes(user.id) : false;
+  const isFeaturedPost = post ? isSeedPost(post.id) : false;
+  const isLiked = post && user && !isFeaturedPost ? post.likedBy?.includes(user.id) : false;
   const bookmarked = post && user ? isBookmarked(post.id, user.id) : false;
 
   // Increment views only once per post when the component mounts or post ID changes
   useEffect(() => {
-    if (id && hasIncrementedViews.current !== id) {
+    if (id && !isSeedPost(id) && hasIncrementedViews.current !== id) {
       // Check if we've already viewed this post in this session
       const viewedPosts = sessionStorage.getItem('bloganity_viewed_posts');
       const viewedPostsArray = viewedPosts ? JSON.parse(viewedPosts) : [];
@@ -164,7 +166,10 @@ const PostDetail: React.FC = () => {
       )}
 
       <Box sx={{ mb: 3 }}>
-        <Chip label={post.category} color="primary" sx={{ mb: 2 }} />
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+          <Chip label={post.category} color="primary" />
+          {isFeaturedPost && <Chip label="Featured" variant="outlined" />}
+        </Box>
         <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
           {post.title}
         </Typography>
@@ -288,7 +293,7 @@ const PostDetail: React.FC = () => {
                       <FavoriteBorderIcon fontSize="small" />
                     </IconButton>
                     <Typography variant="caption">{comment.likes}</Typography>
-                    {user && (user.id === comment.author.id || user.id === post.author.id) && (
+                    {user && !isSeedComment(comment.id) && (user.id === comment.author.id || user.id === post.author.id) && (
                       <IconButton
                         size="small"
                         color="error"

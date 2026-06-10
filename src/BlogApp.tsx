@@ -12,6 +12,7 @@ import EditPost from './pages/EditPost';
 import Profile from './pages/Profile';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
+import ScrollToTop from './components/ScrollToTop';
 import { MaterialThemeProvider} from './theme/theme';
 
 const BlogAppRoutes: React.FC = () => {
@@ -67,6 +68,7 @@ const BlogApp: React.FC = () => {
         <BlogProvider>
           <MaterialThemeProvider>
             <Router>
+              <ScrollToTop />
               <BlogAppRoutes />
             </Router>
           </MaterialThemeProvider>

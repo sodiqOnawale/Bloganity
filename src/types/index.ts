@@ -59,8 +59,10 @@ export interface Bookmark {
 }
 
 export interface BlogContextType {
-  posts: BlogPost[];
-  allPosts: BlogPost[]; // Includes unpublished posts for authors
+  posts: BlogPost[]; // Published community feed (member + seed posts)
+  userPosts: BlogPost[]; // Published member-created posts only
+  communityPosts: BlogPost[]; // Same as posts — member + seed posts
+  allPosts: BlogPost[]; // Member-created posts only (includes drafts)
   addPost: (post: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt' | 'views' | 'likes'>) => void;
   updatePost: (id: string, post: Partial<BlogPost>) => void;
   deletePost: (id: string) => void;

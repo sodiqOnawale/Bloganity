@@ -16,6 +16,7 @@ import {
   Switch,
   FormControlLabel,
   Alert,
+  IconButton,
 } from '@mui/material';
 import { useBlog } from '../context/BlogContext';
 import { useAuth } from '../context/AuthContext';
@@ -23,6 +24,8 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import SaveIcon from '@mui/icons-material/Save';
 import PublishIcon from '@mui/icons-material/Publish';
+import AddIcon from '@mui/icons-material/Add';
+import FeaturedImageInput from '../components/FeaturedImageInput';
 
 const CATEGORIES = [
   'Technology',
@@ -160,14 +163,7 @@ const EditPost: React.FC = () => {
           </Select>
         </FormControl>
 
-        <TextField
-          fullWidth
-          label="Featured Image URL"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          sx={{ mb: 2 }}
-          helperText="Optional: URL to an image for your post"
-        />
+        <FeaturedImageInput value={imageUrl} onChange={setImageUrl} />
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" gutterBottom>
@@ -187,9 +183,19 @@ const EditPost: React.FC = () => {
               }}
               sx={{ flexGrow: 1 }}
             />
-            <Button variant="outlined" onClick={handleTagAdd}>
-              Add
-            </Button>
+            <IconButton
+              onClick={handleTagAdd}
+              aria-label="Add tag"
+              size="small"
+              sx={{
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+                alignSelf: 'center',
+              }}
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
           </Stack>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {tags.map((tag) => (

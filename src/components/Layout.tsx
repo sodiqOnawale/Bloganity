@@ -109,10 +109,14 @@ const Layout: React.FC = () => {
               </Button>
               <Button
                 variant="outlined"
+                size="small"
                 color="inherit"
                 component={Link}
                 to="/signup"
                 sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: '0.8125rem',
                   borderColor: 'rgba(255, 255, 255, 0.5)',
                   transition: 'transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
                   '&:hover': {
