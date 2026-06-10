@@ -18,9 +18,12 @@ import {
   Select,
   MenuItem,
   Paper,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { useBlog } from '../context/BlogContext';
 import { useAuth } from '../context/AuthContext';
+import { isSeedPost } from '../utils/seedPosts';
 import { format } from 'date-fns';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -31,17 +34,21 @@ import CommentIcon from '@mui/icons-material/Comment';
 
 const POSTS_PER_PAGE = 9;
 
+type FeedTab = 'all' | 'member';
+
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const { posts, getComments } = useBlog();
+  const { communityPosts, userPosts, getComments } = useBlog();
   const { isAuthenticated } = useAuth();
+  const [feedTab, setFeedTab] = useState<FeedTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [page, setPage] = useState(1);
 
-  const categories = Array.from(new Set(posts.map((post) => post.category)));
+  const sourcePosts = feedTab === 'all' ? communityPosts : userPosts;
+  const categories = Array.from(new Set(sourcePosts.map((post) => post.category)));
 
-  const filteredPosts = posts.filter((post) => {
+  const filteredPosts = sourcePosts.filter((post) => {
     const matchesSearch =
       searchQuery === '' ||
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -64,14 +71,19 @@ const Home: React.FC = () => {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper
         sx={{
-          p: 6,
+          p: { xs: 4, md: 6 },
           mb: 6,
           textAlign: 'center',
-          background: (theme) =>
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg,rgb(234, 102, 128) 0%, #764ba2 100%)'
-              : 'linear-gradient(135deg,rgb(192, 234, 102) 0%, #764ba2 100%)',
-          color: 'white',
+          color: 'common.white',
+          minHeight: { xs: 280, md: 360 },
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundImage: `linear-gradient(rgba(13, 27, 42, 0.72), rgba(13, 27, 42, 0.55)), url(${process.env.PUBLIC_URL}/images/hero-bg.jpg)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         <Typography variant="h2" component="h1" gutterBottom fontWeight="bold">
@@ -97,6 +109,18 @@ const Home: React.FC = () => {
       </Paper>
 
       <Box sx={{ mb: 4 }}>
+        <Tabs
+          value={feedTab}
+          onChange={(_, value: FeedTab) => {
+            setFeedTab(value);
+            setPage(1);
+          }}
+          sx={{ mb: 3 }}
+        >
+          <Tab label={`All Blogs (${communityPosts.length})`} value="all" />
+          <Tab label={`Member Posts (${userPosts.length})`} value="member" />
+        </Tabs>
+
         <Box
           sx={{
             display: 'grid',
@@ -145,16 +169,41 @@ const Home: React.FC = () => {
       {filteredPosts.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h5" color="text.secondary" gutterBottom>
-            No posts found
+            {feedTab === 'member' && !searchQuery && selectedCategory === 'all'
+              ? 'No member posts yet'
+              : 'No posts found'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {isAuthenticated && (
+            {feedTab === 'member' && !searchQuery && selectedCategory === 'all' ? (
               <>
-                Try adjusting your search or{' '}
-                <Link to="/create-post" style={{ color: 'inherit' }}>
-                  create your first post!
-                </Link>
+                Be the first to share your story, or browse featured posts in{' '}
+                <Button
+                  size="small"
+                  onClick={() => setFeedTab('all')}
+                  sx={{ textTransform: 'none', p: 0, minWidth: 0, verticalAlign: 'baseline' }}
+                >
+                  All Blogs
+                </Button>
+                .
+                {isAuthenticated && (
+                  <>
+                    {' '}You can also{' '}
+                    <Link to="/create-post" style={{ color: 'inherit' }}>
+                      create a post
+                    </Link>
+                    .
+                  </>
+                )}
               </>
+            ) : (
+              isAuthenticated && (
+                <>
+                  Try adjusting your search or{' '}
+                  <Link to="/create-post" style={{ color: 'inherit' }}>
+                    create your first post!
+                  </Link>
+                </>
+              )
             )}
           </Typography>
         </Box>
@@ -199,12 +248,16 @@ const Home: React.FC = () => {
                     />
                   )}
                   <CardContent sx={{ flexGrow: 1 }}>
-                    <Chip
-                      label={post.category}
-                      size="small"
-                      color="primary"
-                      sx={{ mb: 1 }}
-                    />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
+                      <Chip
+                        label={post.category}
+                        size="small"
+                        color="primary"
+                      />
+                      {isSeedPost(post.id) && (
+                        <Chip label="Featured" size="small" variant="outlined" />
+                      )}
+                    </Box>
                     <Typography variant="h6" component="h2" gutterBottom noWrap>
                       {post.title}
                     </Typography>

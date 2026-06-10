@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { BlogProvider, useBlog } from './BlogContext';
 import { act } from 'react-dom/test-utils';
 import { User } from '../types';
+import { DEFAULT_PUBLISHED_POST_COUNT } from '../data/defaultPosts';
 
 const mockUser: User = {
   id: '1',
@@ -12,11 +13,12 @@ const mockUser: User = {
 };
 
 const TestComponent: React.FC = () => {
-  const { posts, addPost, likePost, bookmarkPost, addComment } = useBlog();
+  const { posts, userPosts, addPost, likePost, bookmarkPost, addComment } = useBlog();
 
   return (
     <div>
       <div data-testid="posts-count">{posts.length}</div>
+      <div data-testid="user-posts-count">{userPosts.length}</div>
       <button
         onClick={() =>
           addPost({
@@ -73,7 +75,8 @@ describe('BlogContext', () => {
       </BlogProvider>
     );
 
-    expect(screen.getByTestId('posts-count')).toHaveTextContent('0');
+    expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT));
+    expect(screen.getByTestId('user-posts-count')).toHaveTextContent('0');
   });
 
   it('should add a new post', async () => {
@@ -88,7 +91,7 @@ describe('BlogContext', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('posts-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT + 1));
     });
   });
 
@@ -105,7 +108,7 @@ describe('BlogContext', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('posts-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT + 1));
     });
 
     // Then like it
@@ -115,7 +118,7 @@ describe('BlogContext', () => {
 
     // The post should still exist
     await waitFor(() => {
-      expect(screen.getByTestId('posts-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT + 1));
     });
   });
 
@@ -132,7 +135,7 @@ describe('BlogContext', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('posts-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT + 1));
     });
 
     // Then bookmark it
@@ -142,7 +145,7 @@ describe('BlogContext', () => {
 
     // The post should still exist
     await waitFor(() => {
-      expect(screen.getByTestId('posts-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT + 1));
     });
   });
 
@@ -159,7 +162,7 @@ describe('BlogContext', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('posts-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT + 1));
     });
 
     // Then add a comment
@@ -169,7 +172,7 @@ describe('BlogContext', () => {
 
     // The post should still exist
     await waitFor(() => {
-      expect(screen.getByTestId('posts-count')).toHaveTextContent('1');
+      expect(screen.getByTestId('posts-count')).toHaveTextContent(String(DEFAULT_PUBLISHED_POST_COUNT + 1));
     });
   });
 });

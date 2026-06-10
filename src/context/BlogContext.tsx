@@ -1,5 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { BlogPost, Comment, BlogContextType, Bookmark } from '../types';
+import { DEFAULT_COMMENTS } from '../data/defaultComments';
+import {
+  buildCommunityPosts,
+  findSeedPost,
+  getPublishedUserPosts,
+  isSeedComment,
+  isSeedPost,
+  stripSeedComments,
+  stripSeedPosts,
+} from '../utils/seedPosts';
 
 const BlogContext = createContext<BlogContextType | undefined>(undefined);
 
@@ -7,39 +17,41 @@ const POSTS_STORAGE_KEY = 'bloganity_posts';
 const COMMENTS_STORAGE_KEY = 'bloganity_comments';
 const BOOKMARKS_STORAGE_KEY = 'bloganity_bookmarks';
 
+const loadUserPosts = (): BlogPost[] => {
+  try {
+    const storedPosts = localStorage.getItem(POSTS_STORAGE_KEY);
+    if (storedPosts) {
+      return stripSeedPosts(JSON.parse(storedPosts) as BlogPost[]);
+    }
+  } catch (error) {
+    console.error('Error parsing stored posts:', error);
+  }
+  return [];
+};
+
+const loadUserComments = (): Comment[] => {
+  try {
+    const storedComments = localStorage.getItem(COMMENTS_STORAGE_KEY);
+    if (storedComments) {
+      return stripSeedComments(JSON.parse(storedComments) as Comment[]);
+    }
+  } catch (error) {
+    console.error('Error parsing stored comments:', error);
+  }
+  return [];
+};
+
 // Helper function to calculate reading time
 const calculateReadingTime = (content: string): number => {
   const wordsPerMinute = 200;
-  const text = content.replace(/<[^>]*>/g, ''); // Remove HTML tags
+  const text = content.replace(/<[^>]*>/g, '');
   const wordCount = text.split(/\s+/).length;
   return Math.ceil(wordCount / wordsPerMinute);
 };
 
 export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Initialize state from localStorage synchronously to ensure data is available immediately
-  const [posts, setPosts] = useState<BlogPost[]>(() => {
-    try {
-      const storedPosts = localStorage.getItem(POSTS_STORAGE_KEY);
-      if (storedPosts) {
-        return JSON.parse(storedPosts);
-      }
-    } catch (error) {
-      console.error('Error parsing stored posts:', error);
-    }
-    return [];
-  });
-
-  const [comments, setComments] = useState<Comment[]>(() => {
-    try {
-      const storedComments = localStorage.getItem(COMMENTS_STORAGE_KEY);
-      if (storedComments) {
-        return JSON.parse(storedComments);
-      }
-    } catch (error) {
-      console.error('Error parsing stored comments:', error);
-    }
-    return [];
-  });
+  const [posts, setPosts] = useState<BlogPost[]>(loadUserPosts);
+  const [comments, setComments] = useState<Comment[]>(loadUserComments);
 
   const [bookmarks, setBookmarks] = useState<Bookmark[]>(() => {
     try {
@@ -53,12 +65,6 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return [];
   });
 
-  // This useEffect is no longer needed since we initialize state synchronously
-  // But keeping it commented for reference
-  // useEffect(() => {
-  //   // State is now initialized synchronously, so this is not needed
-  // }, []);
-
   useEffect(() => {
     localStorage.setItem(POSTS_STORAGE_KEY, JSON.stringify(posts));
   }, [posts]);
@@ -70,6 +76,9 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(bookmarks));
   }, [bookmarks]);
+
+  const userPosts = useMemo(() => getPublishedUserPosts(posts), [posts]);
+  const communityPosts = useMemo(() => buildCommunityPosts(posts), [posts]);
 
   const addPost = (postData: Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt' | 'views' | 'likes' | 'likedBy' | 'readingTime'>) => {
     const now = new Date().toISOString();
@@ -84,14 +93,15 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       likedBy: [],
       readingTime,
     };
-    setPosts(prev => [newPost, ...prev]);
+    setPosts((prev) => [newPost, ...prev]);
   };
 
   const updatePost = (id: string, postData: Partial<BlogPost>) => {
-    setPosts(prev => prev.map(post => {
+    if (isSeedPost(id)) return;
+
+    setPosts((prev) => prev.map((post) => {
       if (post.id === id) {
         const updated = { ...post, ...postData, updatedAt: new Date().toISOString() };
-        // Recalculate reading time if content changed
         if (postData.content && postData.content !== post.content) {
           updated.readingTime = calculateReadingTime(postData.content);
         }
@@ -102,50 +112,32 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const deletePost = (id: string) => {
-    setPosts(prev => prev.filter(post => post.id !== id));
-    setComments(prev => prev.filter(comment => comment.postId !== id));
+    if (isSeedPost(id)) return;
+
+    setPosts((prev) => prev.filter((post) => post.id !== id));
+    setComments((prev) => prev.filter((comment) => comment.postId !== id));
   };
 
   const getPost = (id: string): BlogPost | undefined => {
-    // First check in current state
-    let post = posts.find(post => post.id === id);
-    
-    // If not found, check localStorage as fallback (in case state hasn't loaded yet)
-    if (!post) {
-      try {
-        const storedPosts = localStorage.getItem(POSTS_STORAGE_KEY);
-        if (storedPosts) {
-          const allPosts = JSON.parse(storedPosts);
-          post = allPosts.find((p: BlogPost) => p.id === id);
-          // If found in localStorage but not in state, update state
-          if (post && !posts.find(p => p.id === id)) {
-            setPosts(allPosts);
-          }
-        }
-      } catch (error) {
-        console.error('Error reading post from localStorage:', error);
-      }
-    }
-    
-    return post;
+    return posts.find((post) => post.id === id) ?? findSeedPost(id);
   };
 
   const getPostsByAuthor = (authorId: string): BlogPost[] => {
-    return posts.filter(post => post.author.id === authorId);
+    return posts.filter((post) => post.author.id === authorId);
   };
 
   const searchPosts = (query: string): BlogPost[] => {
     const lowerQuery = query.toLowerCase();
-    return posts.filter(post => 
+    return communityPosts.filter((post) =>
       post.title.toLowerCase().includes(lowerQuery) ||
       post.content.toLowerCase().includes(lowerQuery) ||
       post.excerpt.toLowerCase().includes(lowerQuery) ||
-      post.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+      post.tags.some((tag) => tag.toLowerCase().includes(lowerQuery))
     );
   };
 
   const getPostsByCategory = (category: string): BlogPost[] => {
-    return posts.filter(post => post.category === category);
+    return communityPosts.filter((post) => post.category === category);
   };
 
   const addComment = (commentData: Omit<Comment, 'id' | 'createdAt' | 'likes'>) => {
@@ -155,20 +147,29 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       createdAt: new Date().toISOString(),
       likes: 0,
     };
-    setComments(prev => [...prev, newComment]);
+    setComments((prev) => [...prev, newComment]);
   };
 
   const getComments = (postId: string): Comment[] => {
-    return comments.filter(comment => comment.postId === postId);
+    const userComments = comments.filter((comment) => comment.postId === postId);
+
+    if (isSeedPost(postId)) {
+      const seedComments = DEFAULT_COMMENTS.filter((comment) => comment.postId === postId);
+      return [...seedComments, ...userComments];
+    }
+
+    return userComments;
   };
 
   const likePost = (postId: string, userId: string) => {
-    setPosts(prev => prev.map(post => {
+    if (isSeedPost(postId)) return;
+
+    setPosts((prev) => prev.map((post) => {
       if (post.id === postId && !post.likedBy?.includes(userId)) {
         return {
           ...post,
           likes: post.likes + 1,
-          likedBy: [...(post.likedBy || []), userId]
+          likedBy: [...(post.likedBy || []), userId],
         };
       }
       return post;
@@ -176,12 +177,14 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const unlikePost = (postId: string, userId: string) => {
-    setPosts(prev => prev.map(post => {
+    if (isSeedPost(postId)) return;
+
+    setPosts((prev) => prev.map((post) => {
       if (post.id === postId && post.likedBy?.includes(userId)) {
         return {
           ...post,
           likes: Math.max(0, post.likes - 1),
-          likedBy: post.likedBy.filter(id => id !== userId)
+          likedBy: post.likedBy.filter((id) => id !== userId),
         };
       }
       return post;
@@ -189,14 +192,16 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const incrementViews = (postId: string) => {
-    setPosts(prev => prev.map(post => 
+    if (isSeedPost(postId)) return;
+
+    setPosts((prev) => prev.map((post) =>
       post.id === postId ? { ...post, views: post.views + 1 } : post
     ));
   };
 
   const bookmarkPost = (postId: string, userId: string) => {
     const existingBookmark = bookmarks.find(
-      b => b.postId === postId && b.userId === userId
+      (bookmark) => bookmark.postId === postId && bookmark.userId === userId
     );
     if (!existingBookmark) {
       const newBookmark: Bookmark = {
@@ -205,40 +210,49 @@ export const BlogProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         postId,
         createdAt: new Date().toISOString(),
       };
-      setBookmarks(prev => [...prev, newBookmark]);
+      setBookmarks((prev) => [...prev, newBookmark]);
     }
   };
 
   const unbookmarkPost = (postId: string, userId: string) => {
-    setBookmarks(prev => prev.filter(
-      b => !(b.postId === postId && b.userId === userId)
+    setBookmarks((prev) => prev.filter(
+      (bookmark) => !(bookmark.postId === postId && bookmark.userId === userId)
     ));
   };
 
   const isBookmarked = (postId: string, userId: string): boolean => {
-    return bookmarks.some(b => b.postId === postId && b.userId === userId);
+    return bookmarks.some((bookmark) => bookmark.postId === postId && bookmark.userId === userId);
   };
 
   const getBookmarkedPosts = (userId: string): BlogPost[] => {
     const bookmarkedPostIds = bookmarks
-      .filter(b => b.userId === userId)
-      .map(b => b.postId);
-    return posts.filter(post => bookmarkedPostIds.includes(post.id));
+      .filter((bookmark) => bookmark.userId === userId)
+      .map((bookmark) => bookmark.postId);
+
+    return bookmarkedPostIds
+      .map((postId) => getPost(postId))
+      .filter((post): post is BlogPost => Boolean(post));
   };
 
   const likeComment = (commentId: string) => {
-    setComments(prev => prev.map(comment =>
+    if (isSeedComment(commentId)) return;
+
+    setComments((prev) => prev.map((comment) =>
       comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment
     ));
   };
 
   const deleteComment = (commentId: string) => {
-    setComments(prev => prev.filter(comment => comment.id !== commentId));
+    if (isSeedComment(commentId)) return;
+
+    setComments((prev) => prev.filter((comment) => comment.id !== commentId));
   };
 
   return (
     <BlogContext.Provider value={{
-      posts: posts.filter(p => p.published),
+      posts: communityPosts,
+      userPosts,
+      communityPosts,
       allPosts: posts,
       addPost,
       updatePost,
@@ -271,4 +285,3 @@ export const useBlog = (): BlogContextType => {
   }
   return context;
 };
-
